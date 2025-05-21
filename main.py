@@ -7,6 +7,7 @@ import json
 START_SEITE = 0x00
 END_SEITE = 0xE9  
 JSON_ENDE_MARKER = '}}}'
+MAX_RETRIES = 3  # Maximale Anzahl an Leseversuchen pro Seite
 
 def lese_nfc_tag_und_extrahiere_json_bis_marker():
     verbindung = None
@@ -49,19 +50,27 @@ def lese_nfc_tag_und_extrahiere_json_bis_marker():
         print("-------------------------------------------")
 
         for seitennummer in range(START_SEITE, END_SEITE + 1):
-            apdu_befehl_seite_lesen = [0xFF, 0xB0, 0x00, seitennummer, 0x04]
-            try:
-                antwort_seite_daten, status1_seite, status2_seite = verbindung.transmit(apdu_befehl_seite_lesen)
-                if (status1_seite, status2_seite) == (0x90, 0x00):
-                    gesamter_gelesener_inhalt_bytes += bytes(antwort_seite_daten)
-                    hex_str = toHexString(antwort_seite_daten)
-                    # Hier wird latin1 verwendet, KEINE Ersetzung, KEINE Punkte!
-                    ascii_str = bytes(antwort_seite_daten).decode('latin1')
-                    print(f"{seitennummer:3}   | {hex_str:15} | {ascii_str}")
+            retries = 0
+            while retries < MAX_RETRIES:
+                apdu_befehl_seite_lesen = [0xFF, 0xB0, 0x00, seitennummer, 0x04]
+                try:
+                    antwort_seite_daten, status1_seite, status2_seite = verbindung.transmit(apdu_befehl_seite_lesen)
+                    if (status1_seite, status2_seite) == (0x90, 0x00):
+                        gesamter_gelesener_inhalt_bytes += bytes(antwort_seite_daten)
+                        hex_str = toHexString(antwort_seite_daten)
+                        ascii_str = bytes(antwort_seite_daten).decode('latin1')
+                        print(f"{seitennummer:3}   | {hex_str:15} | {ascii_str}")
+                        break  # Erfolgreich, nächste Seite lesen
+                    else:
+                        print(f"{seitennummer:3}   | Fehler: SW1={status1_seite:02X}, SW2={status2_seite:02X} (Versuch {retries+1}/{MAX_RETRIES})")
+                except Exception as e:
+                    print(f"{seitennummer:3}   | Fehler beim Lesen: {e} (Versuch {retries+1}/{MAX_RETRIES})")
+                retries += 1
+                if retries < MAX_RETRIES:
+                    print(f"Erneuter Versuch für Seite {seitennummer}...")
+                    time.sleep(0.5)
                 else:
-                    print(f"{seitennummer:3}   | Fehler: SW1={status1_seite:02X}, SW2={status2_seite:02X}")
-            except Exception as e:
-                print(f"{seitennummer:3}   | Fehler beim Lesen: {e}")
+                    print(f"Abbruch nach {MAX_RETRIES} Fehlversuchen für Seite {seitennummer}.")
 
         # Gesamten Inhalt als String (latin1, robust gegen Sonderzeichen)
         raw_string = gesamter_gelesener_inhalt_bytes.decode('latin1', errors='ignore')
