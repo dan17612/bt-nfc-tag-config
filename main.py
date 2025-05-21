@@ -4,7 +4,9 @@ from smartcard.util import toHexString
 from smartcard.Exceptions import NoCardException, CardConnectionException
 import json
 
-MAX_SEITEN = 255  # Sicherheitsgrenze, wird meist früher abgebrochen
+START_SEITE = 0x00
+END_SEITE = 0xE9  
+JSON_ENDE_MARKER = '}}}'
 
 def lese_nfc_tag_und_extrahiere_json_bis_marker():
     verbindung = None
@@ -42,41 +44,50 @@ def lese_nfc_tag_und_extrahiere_json_bis_marker():
             print(f"Fehler beim Auslesen der UID: Statusbytes SW1={status1_uid:02X}, SW2={status2_uid:02X}")
 
         gesamter_gelesener_inhalt_bytes = b''
-        marker = '}}}'  # Hier kannst du auch z.B. '}}' oder eine andere Endsequenz wählen
 
-        for seitennummer in range(MAX_SEITEN):
+        print("\nSeite | HEX             | String")
+        print("-------------------------------------------")
+
+        for seitennummer in range(START_SEITE, END_SEITE + 1):
             apdu_befehl_seite_lesen = [0xFF, 0xB0, 0x00, seitennummer, 0x04]
             try:
                 antwort_seite_daten, status1_seite, status2_seite = verbindung.transmit(apdu_befehl_seite_lesen)
                 if (status1_seite, status2_seite) == (0x90, 0x00):
                     gesamter_gelesener_inhalt_bytes += bytes(antwort_seite_daten)
-                    # Prüfe, ob der Marker schon im aktuellen String enthalten ist
-                    current_str = gesamter_gelesener_inhalt_bytes.decode('latin1', errors='ignore')
-                    if marker in current_str:
-                        print(f"Marker '{marker}' gefunden, Lesevorgang wird beendet.")
-                        break
+                    hex_str = toHexString(antwort_seite_daten)
+                    # Hier wird latin1 verwendet, KEINE Ersetzung, KEINE Punkte!
+                    ascii_str = bytes(antwort_seite_daten).decode('latin1')
+                    print(f"{seitennummer:3}   | {hex_str:15} | {ascii_str}")
+                else:
+                    print(f"{seitennummer:3}   | Fehler: SW1={status1_seite:02X}, SW2={status2_seite:02X}")
             except Exception as e:
-                print(f"Fehler beim Lesen der Seite {seitennummer}: {e}")
+                print(f"{seitennummer:3}   | Fehler beim Lesen: {e}")
 
-        # Suche nach erstem '{' und letztem '}'
+        # Gesamten Inhalt als String (latin1, robust gegen Sonderzeichen)
         raw_string = gesamter_gelesener_inhalt_bytes.decode('latin1', errors='ignore')
+
+        # JSON-Block bis zum ersten Vorkommen von '}}}'
         start = raw_string.find('{')
-        end = raw_string.rfind('}') + 1
-        if start == -1 or end == -1 or end <= start:
-            print("Konnte keinen gültigen JSON-Block erkennen!")
+        ende_marker = raw_string.find(JSON_ENDE_MARKER)
+        if start == -1 or ende_marker == -1 or ende_marker < start:
+            print("\nKonnte keinen gültigen JSON-Block mit Marker '}}}' erkennen!")
             print("Rohdaten (zur Analyse):")
             print(raw_string)
             return
 
-        json_string = raw_string[start:end]
+        json_string = raw_string[start:ende_marker + len(JSON_ENDE_MARKER)]
         try:
             json_data = json.loads(json_string)
             print("\n--- JSON-Daten erfolgreich extrahiert ---")
             print(json.dumps(json_data, indent=4, ensure_ascii=False))
+            print("\n--- RAW String zur Analyse:")
+            print(raw_string)
         except json.JSONDecodeError as e:
-            print(f"Fehler beim Parsen des JSON-Blocks: {e}")
+            print(f"\nFehler beim Parsen des JSON-Blocks: {e}")
             print("JSON-String zur Analyse:")
             print(json_string)
+            print("\nRAW String zur Analyse:")
+            print(raw_string)
     finally:
         if verbindung:
             try:
