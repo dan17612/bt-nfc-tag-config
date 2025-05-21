@@ -1,6 +1,6 @@
-# BT Beacon config mit Python verändern. (In Entwiklung)
+# BT-Beacons-Konfiguration mit Python ändern. (In Entwicklung)
 
-Folgendes Passiert wenn man
+Folgendes Passiert wenn man namen ändert
 
 | Vorher                                                           | Danach                                                            |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------- |
