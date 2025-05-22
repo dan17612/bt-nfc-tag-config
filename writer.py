@@ -10,9 +10,10 @@ MAX_RETRIES = 3
 # Neue Daten für bestimmte Seiten:
 # Sie können entweder eine Liste von Bytes ODER einen 4-Zeichen-String angeben!
 NEUE_DATEN = {
-    35: "SF-7",
-    36: "7700",
-    37: "08\"}",
+    33: "\":\"S",
+    34: "F-77",
+    35: "7000",
+    36: "2\"},"
     # Beispiel: 40: "TEST",
     # Beispiel: 41: [0x41, 0x42, 0x43, 0x44],
 }
@@ -125,6 +126,8 @@ def schreibe_nfc_tag_seiten_um():
         print("\nVerbindung zum Leser getrennt. Schreibvorgang abgeschlossen.")
     except Exception:
         pass
+
+    
 
 if __name__ == "__main__":
     schreibe_nfc_tag_seiten_um()

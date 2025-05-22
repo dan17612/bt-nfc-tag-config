@@ -5,10 +5,14 @@ from smartcard.Exceptions import NoCardException
 import json
 
 START_SEITE = 0x00
-END_SEITE = 0xE9
-MAX_RETRIES = 3  # Maximale Anzahl an Leseversuchen pro Seite
-gesamter_gelesener_inhalt_bytes = ''
-raw_string = 'empty'
+END_SEITE = 0xE9  
+JSON_ENDE_MARKER_BYTE = 0xFE  # Hexadezimaler Ende-Marker
+MAX_RETRIES = 3  
+
+def speichern_json_in_datei(json_data, dateiname='config.json'):
+    with open(dateiname, 'w', encoding='utf-8') as datei:
+        json.dump(json_data, datei, ensure_ascii=False, indent=4)
+    print(f"\nJSON-Daten wurden in '{dateiname}' gespeichert.")
 
 def lese_nfc_tag_und_extrahiere_json_bis_marker():
     verbindung = None
@@ -73,10 +77,41 @@ def lese_nfc_tag_und_extrahiere_json_bis_marker():
                 else:
                     print(f"Abbruch nach {MAX_RETRIES} Fehlversuchen für Seite {seitennummer}.")
 
-        # Gesamten Inhalt als String (latin1, robust gegen Sonderzeichen)
-        raw_string = gesamter_gelesener_inhalt_bytes.decode('latin1', errors='ignore')
-        print(raw_string)
+        # Suche nach dem JSON-Anfang und dem Ende-Marker (0xFE)
+        start_byte_index = -1
+        ende_byte_index = -1
+        
+        # Suche nach dem ersten '{' als Anfang des JSON
+        for i, byte_val in enumerate(gesamter_gelesener_inhalt_bytes):
+            if byte_val == ord('{'):
+                start_byte_index = i
+                break
+        
+        # Suche nach dem Ende-Marker 0xFE nach dem JSON-Start
+        if start_byte_index != -1:
+            for i in range(start_byte_index, len(gesamter_gelesener_inhalt_bytes)):
+                if gesamter_gelesener_inhalt_bytes[i] == JSON_ENDE_MARKER_BYTE:
+                    ende_byte_index = i
+                    break
+        
+        if start_byte_index == -1 or ende_byte_index == -1:
+            print("\nKonnte keinen gültigen JSON-Block mit Ende-Marker 0xFE erkennen!")
+            print("Rohdaten (zur Analyse):")
+            print(gesamter_gelesener_inhalt_bytes.hex(' '))
+            return
 
+        # Extrahiere JSON-Daten (ohne den Ende-Marker)
+        json_bytes = gesamter_gelesener_inhalt_bytes[start_byte_index:ende_byte_index]
+        json_string = json_bytes.decode('utf-8', errors='ignore')
+        
+        try:
+            json_data = json.loads(json_string)
+            print("\n--- JSON-Datei erfolgreich extrahiert ---")
+            # print(json.dumps(json_data, indent=4, ensure_ascii=False))
+        except json.JSONDecodeError as e:
+            print(f"\nFehler beim Parsen des JSON-Blocks: {e}")
+            print("\nHEX-Dump zur Analyse:")
+            print(gesamter_gelesener_inhalt_bytes.hex(' '))
     finally:
         if verbindung:
             try:
