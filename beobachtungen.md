@@ -6,7 +6,7 @@ Folgendes Passiert wenn man namen ändert
 | -------------------------------------------------------------- | ---------------------------------------------------------------- |
 | ![1747835517437](image/readme/1747835517437.png)<br />15 Zeichen | ![1747835900233](image/readme/1747835900233.png) <br />9 Zeichen  |
 
-Die HEX Zahlen haben sich um 6 erhöht 
+Die HEX Zahlen haben sich um 6 verkleinert
 
 ![1747835562327](image/readme/1747835562327.png)
 

@@ -1,13 +1,14 @@
 import time
 from smartcard.System import readers
 from smartcard.util import toHexString
-from smartcard.Exceptions import NoCardException, CardConnectionException
+from smartcard.Exceptions import NoCardException
 import json
 
 START_SEITE = 0x00
-END_SEITE = 0xE9  
-JSON_ENDE_MARKER = '}}}'
+END_SEITE = 0xE9
 MAX_RETRIES = 3  # Maximale Anzahl an Leseversuchen pro Seite
+gesamter_gelesener_inhalt_bytes = ''
+raw_string = 'empty'
 
 def lese_nfc_tag_und_extrahiere_json_bis_marker():
     verbindung = None
@@ -74,29 +75,8 @@ def lese_nfc_tag_und_extrahiere_json_bis_marker():
 
         # Gesamten Inhalt als String (latin1, robust gegen Sonderzeichen)
         raw_string = gesamter_gelesener_inhalt_bytes.decode('latin1', errors='ignore')
+        print(raw_string)
 
-        # JSON-Block bis zum ersten Vorkommen von '}}}'
-        start = raw_string.find('{')
-        ende_marker = raw_string.find(JSON_ENDE_MARKER)
-        if start == -1 or ende_marker == -1 or ende_marker < start:
-            print("\nKonnte keinen gültigen JSON-Block mit Marker '}}}' erkennen!")
-            print("Rohdaten (zur Analyse):")
-            print(raw_string)
-            return
-
-        json_string = raw_string[start:ende_marker + len(JSON_ENDE_MARKER)]
-        try:
-            json_data = json.loads(json_string)
-            print("\n--- JSON-Daten erfolgreich extrahiert ---")
-            print(json.dumps(json_data, indent=4, ensure_ascii=False))
-            print("\n--- RAW String zur Analyse:")
-            print(raw_string)
-        except json.JSONDecodeError as e:
-            print(f"\nFehler beim Parsen des JSON-Blocks: {e}")
-            print("JSON-String zur Analyse:")
-            print(json_string)
-            print("\nRAW String zur Analyse:")
-            print(raw_string)
     finally:
         if verbindung:
             try:
