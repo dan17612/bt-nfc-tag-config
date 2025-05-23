@@ -1,12 +1,11 @@
 {
+    "title": "3.0.2",
+    "Info": "BLE_FW",
+    "FW_RS": "rc2",
     "properties": {
-        "BattVoltSR": {
-            "init": 0,
-            "value": 1
-        },
         "Name": {
             "init": "BPUCK_ID_15CHAR",
-            "value": "SF-7770002"
+            "value": "SF-7770003"
         },
         "EN": {
             "init": 0,
@@ -42,6 +41,18 @@
             "init": 3.0,
             "value": 10.0
         },
+        "MfrData": {
+            "init": 0,
+            "value": 1
+        },
+        "MfrID": {
+            "init": "010203040506",
+            "value": "000000000000"
+        },
+        "BattVoltSR": {
+            "init": 0,
+            "value": 1
+        },
         "UUID": {
             "init": "0102030405060708090A0B0C0D0E0F10",
             "value": "0102030405060708090A0B0C0D0E0F10"
@@ -61,15 +72,6 @@
         "BID": {
             "init": "010203040A0B",
             "value": "010203040A0B"
-        },
-        "MfrData": {
-            "init": 0,
-            "value": 0
-        },
-        "MfrID": {
-            "init": "010203040506",
-            "value": "000000000000"
         }
-    },
-    "title": "3.0.2"
+    }
 }
