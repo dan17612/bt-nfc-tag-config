@@ -6,6 +6,25 @@ from smartcard.Exceptions import NoCardException
 START_SEITE = 0x00
 END_SEITE = 0xE9
 MAX_RETRIES = 3
+# num = 1
+# dyn_seite2 = 7000
+
+# # Dem Zaeller muss man an die Seiten anpassen 
+# Falls man es nutzen möchte Auskomentiren und anpassen unten nach //// suchen und auch auskomentieren
+# def dynamische_seite_zaeller():
+#     global num, dyn_seite2
+#     if num <= 9:
+#         dyn_seite1 = str(num) + "\"},"
+#         num += 1
+#     else:
+#         num = 0
+#         dyn_seite2 += 1
+#         dyn_seite1 = str(num) + "\"},"
+    
+#     # NEUE_DATEN Dictionary aktualisieren
+#     NEUE_DATEN[36] = dyn_seite1
+#     NEUE_DATEN[35] = str(dyn_seite2)
+#     return dyn_seite1, dyn_seite2
 
 # Neue Daten für bestimmte Seiten:
 # Sie können entweder eine Liste von Bytes ODER einen 4-Zeichen-String angeben!
@@ -19,7 +38,6 @@ MAX_RETRIES = 3
 # Die Daten sollen andere Seiten nicht verschieben sonnst muss der Header angepasst werden und halt der Padding!!!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 NEUE_DATEN = {
-    
     3: [0xE1, 0x10, 0xEF, 0x00],
     4: [0x03, 0xFF, 0x03, 0x10],
     5: [0xC2, 0x06, 0x00, 0x00],
@@ -52,8 +70,8 @@ NEUE_DATEN = {
     32: "alue",
     33: "\":\"S",
     34: "F-77",
-    35: "7000",
-    36: "4\"},",
+    35: "7000",  
+    36: "1\"},",
     37: "\"EN\"",
     38: ":{\"i",
     39: "nit\"",
@@ -244,8 +262,6 @@ NEUE_DATEN = {
     227: [0x00, 0x00, 0x00, 0xFF],
     232: [0x09, 0x32, 0xF8, 0x48],
     233: [0x08, 0x01, 0x00, 0x00],
-    # Beispiel als UTF-8: 40: "TEST",
-    # Beispiel als HEX  : 41: [0x41, 0x42, 0x43, 0x44],
 }
 
 def string_zu_bytes(s):
@@ -256,6 +272,9 @@ def string_zu_bytes(s):
     return list(b)
 
 def schreibe_nfc_tag_seiten_um():
+    # WICHTIG: Dynamische Daten VOR dem Schreibvorgang aktualisieren
+    # //// FALLS BENOETIGT AUSKOMENTIREN  dynamische_seite_zaeller()
+    
     kartenleser_liste = readers()
 
     if not kartenleser_liste:
@@ -394,6 +413,7 @@ def main_loop():
                         break
             
             tag_zaehler += 1
+            
             time.sleep(1)  # Kurze Pause zwischen den Tags
             
     except KeyboardInterrupt:

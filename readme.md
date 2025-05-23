@@ -11,13 +11,13 @@ Dieses System besteht aus drei Python-Scripts für das Auslesen und Beschreiben 
 
 ## Hardware
 
-* NFC-Kartenleser (z.B. ACR122U)
-* NFC-Tags (NTAG213/215/216 oder kompatibel)
+- NFC-Kartenleser (z.B. ACR122U)
+- NFC-Tags (NTAG213/215/216 oder kompatibel)
 
 ## Software
 
-* Python 3.7 oder höher
-* Erforderliche Python-Pakete:
+- Python 3.7 oder höher
+- Erforderliche Python-Pakete:
 
   `pip install pyscard`
 
@@ -27,11 +27,11 @@ Dieses System besteht aus drei Python-Scripts für das Auslesen und Beschreiben 
 2. **NFC-Reader anschließen** und sicherstellen, dass er vom System erkannt wird
 3. **Scripts herunterladen** und in einem Ordner speichern
 
-
 ## Benutzen
 
 1. Wenn die Installation fertig ist, haben Sie reader.py und writer.py in dem Ordner.
 2. Sie haben einen NFC-Kartenleser angeschlossen und starten reader.py.
 3. Es wird eine TXT-Datei erstellt.
-4. Mit dieser passt man dann writer.py an, um die Daten auf die nächsten Tags zu kopieren.
+4. Mit dieser passt man dann writer.py an, um die Daten auf die nächsten Tags zu kopieren. Wenn man die Funktion für dynamischen namen zb SF7770001, SF-7770002 nicht einrichten will kann man es auskomentiren es funktioniert auch ohne.
 5. Erst wenn writer.py angepasst wurde, wird es gestartet und es können die Tags nach den Aufforderungen der Konsole nacheinander aufgelegt werden.
+6. Man kann immer dem debug_reader.py nutzen um alle daten zu sehen
