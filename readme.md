@@ -2,6 +2,8 @@
 
 A Python-based toolkit for reading, writing, and managing BLE beacon configurations stored on NFC tags (NTAG213/215/216). Built for batch-configuring Bluetooth beacons via an ACR122U NFC reader.
 
+---
+
 ## Features
 
 - **Read** NFC tags and extract embedded JSON beacon configurations
@@ -11,10 +13,14 @@ A Python-based toolkit for reading, writing, and managing BLE beacon configurati
 - **Name list extraction** from multiple tags for inventory tracking
 - **Reader control** (power management, buzzer on/off)
 
+---
+
 ## Hardware Requirements
 
 - NFC card reader (ACR122U or compatible)
 - NFC tags (NTAG213 / NTAG215 / NTAG216)
+
+---
 
 ## Installation
 
@@ -28,6 +34,8 @@ Optional dependencies for advanced functionality:
 ```bash
 pip install nfcpy ndeflib pyserial libusb1
 ```
+
+---
 
 ## Usage
 
@@ -76,6 +84,8 @@ python tonausmachen.py
 
 - Toggle reader buzzer and power state
 
+---
+
 ## Beacon Configuration
 
 The tags store a JSON configuration with the following BLE beacon properties:
@@ -92,16 +102,20 @@ The tags store a JSON configuration with the following BLE beacon properties:
 | `NID`      | Eddystone Namespace ID             | `01020304...090A`  |
 | `BID`      | Eddystone Beacon ID                | `010203040A0B`     |
 
+---
+
 ## NFC Memory Layout
 
 | Pages    | Content                              |
 |----------|--------------------------------------|
-| 0 - 2    | Manufacturer data (read-only)        |
-| 3 - 7    | NDEF message header                  |
-| 8 - 201  | JSON configuration (UTF-8 encoded)   |
+| 0 – 2    | Manufacturer data (read-only)        |
+| 3 – 7    | NDEF message header                  |
+| 8 – 201  | JSON configuration (UTF-8 encoded)   |
 | 202+     | Footer / additional data             |
 
 End marker: `0xFE` byte after JSON payload.
+
+---
 
 ## Project Structure
 
@@ -114,46 +128,61 @@ tonausmachen.py     # NFC reader power/buzzer control
 config.json         # Example beacon configuration template
 ```
 
+---
+
 ## Tech Stack
 
-- **pyscard** - Smartcard/NFC reader communication via APDU commands
-- **nfcpy** / **ndeflib** - NFC Data Exchange Format handling
+- **pyscard** – Smartcard/NFC reader communication via APDU commands
+- **nfcpy** / **ndeflib** – NFC Data Exchange Format handling
 - Python 3.7+
 
-# BT-Beacons-Konfiguration mit Python ändern. (In Entwicklung)
+---
 
-Folgendes Passiert wenn man namen ändert
+## Memory Behavior When Changing the Beacon Name *(Work in Progress)*
 
-| Vorher                                                         | Danach                                                           |
-| -------------------------------------------------------------- | ---------------------------------------------------------------- |
-| ![1747835517437](image/readme/1747835517437.png)<br />15 Zeichen | ![1747835900233](image/readme/1747835900233.png) <br />9 Zeichen  |
+This section documents observed changes in NFC tag memory when the beacon name length is modified.
 
-Die HEX Zahlen haben sich um 6 verkleinert
+### Effect on Beacon Name Length
 
-![1747835562327](image/readme/1747835562327.png)
+The following comparison shows the raw memory contents before and after shortening the beacon name from 15 characters to 9 characters:
 
-der Speicher Block hat sich wegen dem um 6 Zeichen kürzeren namen um 2 Speicher böcke verschoben.
+| Before (15 chars)                                         | After (9 chars)                                            |
+| --------------------------------------------------------- | ---------------------------------------------------------- |
+| ![Before – 15 characters](image/readme/1747835517437.png) | ![After – 9 characters](image/readme/1747835900233.png)    |
 
-![1747835660126](image/readme/1747835660126.png)
+The HEX length values decreased by 6, reflecting the 6-character reduction in the name.
 
-Unsere Dummy Speicher Blöcke wurden genutzt: Es ist um 6 byte verschoben
+![HEX value comparison](image/readme/1747835562327.png)
 
-![1747836011905](image/readme/1747836011905.png)
+### Memory Block Shift
 
-| Vorher                                         | Nacher                                         |
-| ---------------------------------------------- | ---------------------------------------------- |
-| ![1747895480935](image/readme/1747895480935.png) | ![1747895495084](image/readme/1747895495084.png) |
+Due to the 6-character shorter name, the memory block shifted by 2 pages:
 
-2 HEX Zahlen haben sich um ein Wert erhöht
+![Memory block shift](image/readme/1747835660126.png)
 
-![1747895725213](image/readme/1747895725213.png)
+The previously reserved dummy/padding memory blocks absorbed the shift — the payload is offset by 6 bytes:
 
-Unser wert in der Config hat alles verschoben
-![1747895788058](image/readme/1747895788058.png)
+![Dummy block usage](image/readme/1747836011905.png)
 
-Dummy  Speicher  Blöcke haben sich auch um eine stelle gekürzt
+### Effect on Configuration Values
 
-![1747895935188](image/readme/1747895935188.png)
+| Before                                           | After                                            |
+| ------------------------------------------------ | ------------------------------------------------ |
+| ![Before config](image/readme/1747895480935.png) | ![After config](image/readme/1747895495084.png)  |
+
+Two HEX values each increased by 1:
+
+![HEX value increment](image/readme/1747895725213.png)
+
+The updated configuration value caused a global shift in the memory layout:
+
+![Config-triggered shift](image/readme/1747895788058.png)
+
+The dummy/padding memory blocks were also reduced by one entry:
+
+![Dummy block reduction](image/readme/1747895935188.png)
+
+---
 
 ## License
 
