@@ -1,37 +1,125 @@
-# NFC Tag Reader/Writer System - README
+# NFC Tag Configuration Tool for BLE Beacons
 
-## Übersicht
+A Python-based toolkit for reading, writing, and managing BLE beacon configurations stored on NFC tags (NTAG213/215/216). Built for batch-configuring Bluetooth beacons via an ACR122U NFC reader.
 
-Dieses System besteht aus drei Python-Scripts für das Auslesen und Beschreiben von NFC-Tags:
+## Features
 
-1. **Reader Script** - Liest NFC-Tags aus und extrahiert Konfigurationen von einem Tag
-2. **Writer Script** - Beschreibt NFC-Tags mit neuen Konfigurationen
+- **Read** NFC tags and extract embedded JSON beacon configurations
+- **Write** modified configurations back to tags with automatic sequential naming (e.g. `SF-7770001`, `SF-7770002`, ...)
+- **Batch mode** for programming multiple tags in sequence
+- **Debug reader** with full hex/ASCII memory dump and JSON extraction
+- **Name list extraction** from multiple tags for inventory tracking
+- **Reader control** (power management, buzzer on/off)
 
-## Systemanforderungen
+## Hardware Requirements
 
-## Hardware
-
-- NFC-Kartenleser (z.B. ACR122U)
-- NFC-Tags (NTAG213/215/216 oder kompatibel)
-
-## Software
-
-- Python 3.7 oder höher
-- Erforderliche Python-Pakete:
-
-  `pip install pyscard`
+- NFC card reader (ACR122U or compatible)
+- NFC tags (NTAG213 / NTAG215 / NTAG216)
 
 ## Installation
 
-1. **Python-Pakete installieren: `pip install pyscard`**
-2. **NFC-Reader anschließen** und sicherstellen, dass er vom System erkannt wird
-3. **Scripts herunterladen** und in einem Ordner speichern
+```bash
+# Python 3.7+
+pip install pyscard
+```
 
-## Benutzen
+Optional dependencies for advanced functionality:
 
-1. Wenn die Installation fertig ist, haben Sie reader.py und writer.py in dem Ordner.
-2. Sie haben einen NFC-Kartenleser angeschlossen und starten reader.py.
-3. Es wird eine TXT-Datei erstellt.
-4. Mit dieser passt man dann writer.py an, um die Daten auf die nächsten Tags zu kopieren. Wenn man die Funktion für dynamischen namen zb SF7770001, SF-7770002 nicht einrichten will kann man es auskomentiren es funktioniert auch ohne.
-5. Erst wenn writer.py angepasst wurde, wird es gestartet und es können die Tags nach den Aufforderungen der Konsole nacheinander aufgelegt werden.
-6. Man kann immer dem debug_reader.py nutzen um alle daten zu sehen
+```bash
+pip install nfcpy ndeflib pyserial libusb1
+```
+
+## Usage
+
+### 1. Read a Tag
+
+```bash
+python reader.py
+```
+
+- Select single or continuous reading mode
+- A `.txt` file is generated with the tag's data as an editable Python dictionary (named by tag UID)
+
+### 2. Write Tags
+
+```bash
+python writer.py
+```
+
+- Paste the `NEUE_DATEN` dictionary from the reader output into `writer.py`
+- Optionally enable dynamic naming for sequential beacon IDs
+- Present tags one by one — the writer programs each tag and increments the counter
+
+### 3. Debug / Inspect
+
+```bash
+python debug_reader.py
+```
+
+- Displays all NFC tag memory pages in hex and ASCII
+- Extracts and saves the embedded JSON configuration to `config.json`
+
+### 4. Extract Beacon Names
+
+```bash
+python namelist.py
+```
+
+- Reads beacon names from multiple tags
+- Saves a timestamped list to `nfc_namen_liste_*.txt`
+
+### 5. Reader Control
+
+```bash
+python tonausmachen.py
+```
+
+- Toggle reader buzzer and power state
+
+## Beacon Configuration
+
+The tags store a JSON configuration with the following BLE beacon properties:
+
+| Property   | Description                        | Example Value      |
+|------------|------------------------------------|--------------------|
+| `Name`     | Beacon identifier (max 15 chars)   | `SF-7770001`       |
+| `Power`    | TX power level (dBm)               | `4` (-40 to 4)     |
+| `Format`   | Broadcast format                   | `Eddystone`        |
+| `AdvRec`   | Advertisement interval (seconds)   | `10.0` (0.1 - 10)  |
+| `UUID`     | iBeacon UUID                       | `01020304...0F10`  |
+| `Major`    | iBeacon Major                      | `020B`             |
+| `Minor`    | iBeacon Minor                      | `010A`             |
+| `NID`      | Eddystone Namespace ID             | `01020304...090A`  |
+| `BID`      | Eddystone Beacon ID                | `010203040A0B`     |
+
+## NFC Memory Layout
+
+| Pages    | Content                              |
+|----------|--------------------------------------|
+| 0 - 2    | Manufacturer data (read-only)        |
+| 3 - 7    | NDEF message header                  |
+| 8 - 201  | JSON configuration (UTF-8 encoded)   |
+| 202+     | Footer / additional data             |
+
+End marker: `0xFE` byte after JSON payload.
+
+## Project Structure
+
+```
+reader.py           # Read tags and generate editable config files
+writer.py           # Write configurations to tags (batch mode)
+debug_reader.py     # Full memory dump and JSON extraction
+namelist.py         # Extract beacon names from multiple tags
+tonausmachen.py     # NFC reader power/buzzer control
+config.json         # Example beacon configuration template
+```
+
+## Tech Stack
+
+- **pyscard** - Smartcard/NFC reader communication via APDU commands
+- **nfcpy** / **ndeflib** - NFC Data Exchange Format handling
+- Python 3.7+
+
+## License
+
+MIT
